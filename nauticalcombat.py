@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+              # -*- coding: utf-8 -*-
 """
 author: Horst JeNS,
 email: horstjens@gmail.com
@@ -464,7 +464,9 @@ class FlyingObject(pygame.sprite.Sprite):
         self.rect.centery = round(self.y, 0)
         # alive?
         if self.hitpoints < 1:
+            Explosion(x=self.x, y=self.y)
             self.kill()
+            
 
 
 
@@ -483,8 +485,7 @@ class Plane(FlyingObject):
         self.x = 50
         self.y = 50
         self.path = [(50,50),(150,150),(300,50)]
-        self.newpoint = 1
-        self.oldpoint = 0
+        self.point = 1
         
     def create_image(self):
         self.image = self.images[0]
@@ -503,60 +504,11 @@ class Plane(FlyingObject):
         self.y += self.dy * seconds
         self.rect.centerx = round(self.x, 0)
         self.rect.centery = round(self.y, 0)
-        #if self.point == 1:
-        #    if self.x>150:
-        #        self.point = 2
-        #        (self.x,self.y) = self.path[1]
-        #        self.dy = -10
-        # x
-        if self.path[self.oldpoint][0] < self.path[self.newpoint][0]:
-            dirx = 1
-        elif self.path[self.oldpoint][0] > self.path[self.newpoint][0]:
-            dirx = -1
-        else:
-            dirx = 0
-        # y
-        if self.path[self.oldpoint][1] < self.path[self.newpoint][1]:
-            diry = 1
-        elif self.path[self.oldpoint][1] > self.path[self.newpoint][1]:
-            diry = -1
-        else:
-            diry = 0
-        pointwechsel = False            
-        if dirx != 0:
-            if dirx == 1:
-                if self.x > self.path[self.newpoint][0]:
-                    pointwechsel = True
-            else:
-                if self.x < self.path[self.newpoint][0]:
-                    pointwechsel = True
-        if diry != 0:
-            if diry == 1:
-                if self.y > self.path[self.newpoint][1]:
-                    pointwechsel = True
-            else:
-                if self.y < self.path[self.newpoint][1]:
-                    pointwechsel = True
-        if pointwechsel:
-            # letzer in der liste?
-            if self.newpoint == len(self.path)-1:
-                self.oldpoint = self.newpoint
-                self.newpoint = 0
-            else:
-                tmp = self.newpoint
-                self.newpoint += 1
-                self.oldpoint = tmp
-            (self.x, self.y) = self.path[self.oldpoint]
-            pointwechsel = False
-            #print("oldpoint, newpoint", self.oldpoint, self.newpoint)
-            self.dx = self.path[self.newpoint][0] - self.path[self.oldpoint][0]
-            self.dy = self.path[self.newpoint][1] - self.path[self.oldpoint][1]
-                    
-                    
-            
-        
-        
-        
+        if self.point == 1:
+            if self.x>150:
+                self.point = 2
+                (self.x,self.y) = self.path[1]
+                self.dy = -10
         # alive?
         if self.hitpoints < 1:
             self.kill()
@@ -614,23 +566,46 @@ class Hitpointbar(pygame.sprite.Sprite):
 
 class Explosion(FlyingObject):
     """a big pygame Sprite with high mass"""
+    images = []
+    
         
     def init2(self):
         self.mass = 150
         checked = False
-        self.dx = random.random() * 100 - 50
-        self.dy = random.random() * 100 - 50
-        Hitpointbar(self.number)
+        #self.dx = random.random() * 100 - 50
+        #self.dy = random.random() * 100 - 50
+       #Hitpointbar(self.number)
         
     def create_image(self):
-        self.image = pygame.Surface((self.width,self.height))    
-        pygame.draw.circle(self.image, self.color, (self.radius, self.radius), self.radius) # draw blue filled circle on ball surface
-        pygame.draw.circle (self.image, (0,0,200) , (self.radius //2 , self.radius //2), self.radius// 3)         # left blue eye
-        pygame.draw.circle (self.image, (255,255,0) , (3 * self.radius //2  , self.radius //2), self.radius// 3)  # right yellow yey
-        pygame.draw.arc(self.image, (32,32,32), (self.radius //2, self.radius, self.radius, self.radius//2), math.pi, 2*math.pi, 1) # grey mouth
-        self.image.set_colorkey((0,0,0))
-        self.image = self.image.convert_alpha() # faster blitting with transparent color
-        self.rect= self.image.get_rect()        
+        
+        #pass
+        #self.image = pygame.Surface((self.width,self.height))    
+        #pygame.draw.circle(self.image, self.color, (self.radius, self.radius), self.radius) # draw blue filled circle on ball surface
+        #pygame.draw.circle (self.image, (0,0,200) , (self.radius //2 , self.radius //2), self.radius// 3)         # left blue eye
+        #pygame.draw.circle (self.image, (255,255,0) , (3 * self.radius //2  , self.radius //2), self.radius// 3)  # right yellow yey
+        #pygame.draw.arc(self.image, (32,32,32), (self.radius //2, self.radius, self.radius, self.radius//2), math.pi, 2*math.pi, 1) # grey mouth
+        #self.image.set_colorkey((0,0,0))
+        #self.image = self.image.convert_alpha() # faster blitting with transparent color
+        self.image = Explosion.images[0]
+        self.imagenr = 0
+        self.rect= self.image.get_rect()
+
+        self.lifetime = 1.5 # gesamtdauer der explosion
+        self.cyclelenght = self.lifetime / len(Explosion.images)
+        self.cycletime = 0
+        
+    def update(self, seconds):
+        """calculate movement, position and bouncing on edge"""
+        self.rect.centerx = round(self.x, 0)
+        self.rect.centery = round(self.y, 0)
+        self.cycletime += seconds
+        if self.cycletime > self.cyclelenght:
+            self.imagenr += 1
+            if self.imagenr >= len(Explosion.images):
+                self.kill()
+            self.image = Explosion.images[self.imagenr]
+            
+            
 
 class EnemySub(SwimmingObject):
     """a big pygame Sprite with high mass"""
@@ -803,7 +778,7 @@ class PygView(object):
         self.fps = fps
         self.playtime = 0.0
         #self.loadresources()
-        self.mapzoom = 5
+        self.mapzoom = 2
         
         
     def zoom_in(self):
@@ -841,7 +816,21 @@ class PygView(object):
             Plane.images.append(pygame.image.load(os.path.join("data", "fighter2.png")))
             rosa = Plane.images[1].get_at((0,0))
             Plane.images[0].set_colorkey(rosa)            
-            Plane.images[1].set_colorkey(rosa)      
+            Plane.images[1].set_colorkey(rosa) 
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom1.png")))
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom2.png")))
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom3.png")))
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom4.png")))
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom5.png")))
+            Explosion.images.append(pygame.image.load(os.path.join("data", "boom6.png")))
+            rosa = Explosion.images[0].get_at((0,0))
+            Explosion.images[0].set_colorkey(rosa)            
+            Explosion.images[1].set_colorkey(rosa)
+            Explosion.images[2].set_colorkey(rosa)
+            Explosion.images[3].set_colorkey(rosa)
+            Explosion.images[4].set_colorkey(rosa)
+            Explosion.images[5].set_colorkey(rosa)    
+            Explosion.images[0].convert_alpha() 
             
             # load other resources here
         except:
@@ -889,6 +878,7 @@ class PygView(object):
         Torpedo.groups = self.allgroup, self.torpedogroup
         Torpedoexplosion.groups = self.allgroup,
         EnemySub.groups = self.allgroup, self.enemysubgroup
+        Explosion.groups = self.allgroup,
         self.enemysub1 = EnemySub(x=150, y=150, imagenr = 5)
         self.enemysub2 = EnemySub(x=350, y=250, imagenr = 5)
         self.player1 = Player(x=400, y=200, dx=0, dy=0, layer=5, imagenr = 4) # over balls layer
@@ -962,8 +952,7 @@ class PygView(object):
             self.playtime += seconds
             self.screen.blit(self.background, (0 + self.mapdx, 0 + self.mapdy))  # clear screen
             # write text below sprites
-            write(self.screen, "FPS: {:6.3}  PLAYTIME: {:6.3} SECONDS".format(
-                           self.clock.get_fps(), self.playtime))
+            #write(self.screen, "FPS: {:6.3}  PLAYTIME: {:6.3} SECONDS".format(self.clock.get_fps(), self.playtime))
             # ----------- collision detection between enemysub and torpedo --------
             for ship in self.enemysubgroup:
                 crashgroup = pygame.sprite.spritecollide(ship, self.torpedogroup, True, pygame.sprite.collide_mask)
@@ -990,6 +979,11 @@ class PygView(object):
                         player.hitpoints -= othertorpedo.damage
                         othertorpedo.kill()
                         
+            # ------------ collision detection between EnemySub and Player
+            for player in self.playergroup:
+                crashgroup = pygame.sprite.spritecollide(player, self.enemysubgroup, False, pygame.sprite.collide_circle)
+                for enemysub in crashgroup:
+                    elastic_collision(player, enemysub)
             # 
             # ----------- clear, draw , update, flip -----------------  
             #self.allgroup.clear(screen, background)
@@ -1001,8 +995,10 @@ class PygView(object):
             #write(self.screen, "Press b to add another ball", x=self.width//2, y=250, center=True)
             # --------- next frame ---------------
             pygame.display.flip()
-            # update status text 
-            pygame.display.set_caption("Press ESC to quit"+"mapzoom: {}".format(self.mapzoom))
+            # update status text
+            milliseconds = self.clock.tick(self.fps) 
+            seconds = milliseconds / 1000
+            pygame.display.set_caption("Press ESC to quit / mapzoom: {} / FPS: {:6.3} / HP: {}".format(self.mapzoom, self.clock.get_fps(), player.hitpoints))
         pygame.quit()
 
 if __name__ == '__main__':
