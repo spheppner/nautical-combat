@@ -92,7 +92,7 @@ class Menu(object):
 
 class PygView(object):
 
-    def __init__(self, width=640, height=400, fps=30):
+    def __init__(self, width=640, height=400, fps=30, cursortext="-->", cursorimage=None, backgroundimage = None):
         """Initialize pygame, window, background, font,...
            default arguments
         """
@@ -100,7 +100,19 @@ class PygView(object):
         pygame.mixer.pre_init(44100, -16, 2, 2048)
 
         pygame.init()
-
+        if cursorimage is not None:
+            try:
+                self.cursorimage = pygame.image.load(cursorimage)
+                self.cursorimage = pygame.transform.smoothscale(self.cursorimage, (128, 32))
+            except:
+                print("Fehler beim Cursor image load")
+                self.cursorimage = None
+        else:
+            self.cursorimage = cursorimage
+        self.cursortext = cursortext
+        self.backgroundimage = backgroundimage 
+        self.backgrounds = []
+   
         self.sound1 = pygame.mixer.Sound(os.path.join('data','select.wav'))
         self.sound2 = pygame.mixer.Sound(os.path.join('data','updown.wav'))
         pygame.display.set_caption("Press ESC to quit")
@@ -114,19 +126,45 @@ class PygView(object):
 
     def set_resolution(self):
         self.screen = pygame.display.set_mode((self.width+5, self.height), pygame.DOUBLEBUF)
-        self.background = pygame.Surface(self.screen.get_size()).convert()
-        self.background.fill((255,255,255)) # fill background white
+        if self.backgroundimage is None:
+            self.background = pygame.Surface(self.screen.get_size()).convert()
+            self.background.fill((255,255,255)) # fill background white
+            
+        else:
+            self.background = pygame.image.load(self.backgroundimage)
+            self.background = pygame.transform.scale(self.background, self.screen.get_size())
+            self.background.convert()
+            for x in range(10):  # backgroundimage0 - backgroundimage9
+                filename = self.backgroundimage[:-4] + str(x) + self.backgroundimage[-4:]
+                try:
+                    image = pygame.image.load(filename)                 
+                    image = pygame.transform.scale(image, self.screen.get_size())
+                    image.convert()
+                    self.backgrounds.append(image)
+                except:
+                    print("no backgroundimage found for {}".format(filename))
+        self.backgrounds.append(self.background)
+        self.background = self.backgrounds[1]
+                    
+        
 
     def paint(self):
         """painting on the surface"""
         for i in  m.items:
             n=m.items.index(i)
             if n==m.active_itemnumber:
-                self.draw_text("-->",50,  m.items.index(i)*30+10,(0,0,255))
-                self.draw_text(i, 100, m.items.index(i)*30+10,(0,0,255))
-            else:
-                self.draw_text(i, 100, m.items.index(i)*30+10)
-
+                if self.cursorimage is not None:
+                    self.screen.blit(self.cursorimage, (10, m.items.index(i)*30+60-7))
+                    # improve image height position
+                    #self.self.draw_text(self.cursortext,50,  m.items.index(i)*30+10,(0,0,255))
+                    #self.draw_text(i, 100, m.items.index(i)*30+10,(0,0,255))
+                else:
+                    # --> draw cursortext
+                    self.draw_text(self.cursortext,10,  m.items.index(i)*30+60,(0,0,255))
+                    #self.draw_text(i, 100, m.items.index(i)*30+10,(0,0,255))
+            #else:
+                #self.draw_text(i, 100, m.items.index(i)*30+10)
+            self.draw_text(i, 100, m.items.index(i)*30+60)
 
     def run(self):
         """The mainloop
@@ -179,7 +217,11 @@ class PygView(object):
                         #print(m.get_text())
                         print(result)
                         if result is None:
+                            #print("Bildwechsel")
+                            #print(self.backgrounds)
+                            self.background = random.choice(self.backgrounds)
                             break
+                        
                         if "x" in result:
                             # change screen resolution, menu text is something like "800x600"
                             left = result.split("x")[0]
@@ -227,8 +269,8 @@ class PygView(object):
                             print("Bye")
                             pygame.quit()
                             sys.exit()
-							
-							
+                            
+                            
             milliseconds = self.clock.tick(self.fps)
             #self.playtime += milliseconds / 1000.0
             self.draw_text("FPS: {:6.3}".format(self.clock.get_fps()))
@@ -242,7 +284,7 @@ class PygView(object):
         pygame.quit()
 
 
-    def draw_text(self, text ,x=50 , y=0,color=(27,135,177)):
+    def draw_text(self, text ,x=50 , y=0,color=(255,0,0)):
         if y==0:
             y= self.height - 50
 
@@ -259,4 +301,4 @@ if __name__ == '__main__':
 
     # call with width of window and fps
     m=Menu(Settings.menu)
-    PygView().run()
+    PygView(cursortext=">>>", cursorimage=os.path.join("data","scrollimage.png"), backgroundimage = os.path.join("data", "titlescreen.png")).run()
